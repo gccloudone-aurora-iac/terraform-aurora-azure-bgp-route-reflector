@@ -1,0 +1,4 @@
+# Only install packages through Artifactory
+Package: *
+Pin: origin artifactory.ssc-spc.gc.ca
+Pin-Priority: 9999

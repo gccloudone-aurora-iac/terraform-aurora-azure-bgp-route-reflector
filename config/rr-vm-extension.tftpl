@@ -1,0 +1,54 @@
+#!/bin/bash
+# Configures a BGP Route Reflector
+
+set -eo pipefail -o xtrace
+
+echo "---------------- START ----------------"
+
+echo "[INFO] Disabling upstream APT sources"
+truncate -s 0 /etc/apt/sources.list
+
+# Configure the credentials necessary to pull the bird-bgp debian package from Artifactory
+echo "${apt_auth_config}" > /etc/apt/auth.conf.d/artifactory.conf
+
+# Set the required APT preferences to pull packages only from Artifactory
+echo "${apt_preferences}" > /etc/apt/preferences.d/95artifactory
+
+# Remove Any Existing Repos and Certs
+echo "[INFO] Removing existing sources from /etc/apt/sources.list.d/"
+rm -f /etc/apt/sources.list.d/*.list
+
+# Add APT Repositories
+OS_ARCHITECTURE=$(dpkg --print-architecture)
+OS_VERSION_CODENAME=$(lsb_release -cs)
+echo "[INFO] Adding Repositories with OS_ARCHITECTURE=$OS_ARCHITECTURE and OS_VERSION_CODENAME=$OS_VERSION_CODENAME ..."
+
+## Add the debian repository
+echo "deb [arch=$OS_ARCHITECTURE] https://artifactory.ssc-spc.gc.ca/artifactory/debian-remote $OS_VERSION_CODENAME main universe multiverse" > /etc/apt/sources.list.d/ubuntu_artifactory.list
+echo "deb [arch=$OS_ARCHITECTURE] https://artifactory.ssc-spc.gc.ca/artifactory/debian-remote $OS_VERSION_CODENAME-updates main restricted universe multiverse" >> /etc/apt/sources.list.d/ubuntu_artifactory.list
+echo "deb [arch=$OS_ARCHITECTURE] https://artifactory.ssc-spc.gc.ca/artifactory/debian-remote $OS_VERSION_CODENAME-backports main restricted universe multiverse" >> /etc/apt/sources.list.d/ubuntu_artifactory.list
+echo "deb [arch=$OS_ARCHITECTURE] https://artifactory.ssc-spc.gc.ca/artifactory/debian-remote $OS_VERSION_CODENAME-security main restricted universe multiverse" >> /etc/apt/sources.list.d/ubuntu_artifactory.list
+
+## Ensure CA Certificates are installed
+apt-get update && apt-get install -y ca-certificates
+
+## Add bird-bgp repository
+curl -fsSL https://aurora.gccloudone.ca/certs/cloudnative-apt-signing.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/cloudnative-apt-signing.gpg > /dev/null
+echo "deb [arch=$OS_ARCHITECTURE] https://artifactory.ssc-spc.gc.ca/artifactory/aurora-birdbgp-apt-local $OS_VERSION_CODENAME main" > /etc/apt/sources.list.d/birdbgp_artifactory.list
+
+# Update apt & install the bird-bgp package
+apt-get update
+[ "${package_version}" ] && apt-get install -y ${package_name}=${package_version} || apt-get -y install ${package_name}
+
+# Write the Bird-BGP Daemon configuration
+echo "${daemon_config.authentication}" > /bgp/azure_client.env
+echo "${daemon_config.value}" > ${daemon_config.path}
+
+# Write Bird local configuration
+echo "${local_bird_config}" > /etc/bird/local-custom.conf
+
+# Restart BIRD and the Bird-BGP daemon services
+systemctl restart bird.service
+systemctl restart bird-bgp.service
+
+echo "---------------- END ----------------"
