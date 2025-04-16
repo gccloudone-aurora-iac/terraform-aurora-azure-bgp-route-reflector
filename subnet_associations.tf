@@ -1,12 +1,12 @@
 resource "azurerm_route_table" "default" {
   count = var.rt_default_virtual_appliance_ip_address != null ? 1 : 0
 
-  name                = module.azure_resource_prefixes.route_table_prefix
+  name                = module.azure_resource_names.route_table_name
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
   route {
-    name                   = "${module.azure_resource_prefixes.prefix}-route-default"
+    name                   = "${module.azure_resource_names.name}-route-default"
     address_prefix         = "0.0.0.0/0"
     next_hop_type          = "VirtualAppliance"
     next_hop_in_ip_address = var.rt_default_virtual_appliance_ip_address
@@ -20,7 +20,7 @@ resource "azurerm_route_table" "default" {
 ###########
 
 resource "azurerm_network_security_group" "this" {
-  name                = "${module.azure_resource_prefixes.network_security_group_prefix}-route-reflector"
+  name                = "${module.azure_resource_names.network_security_group_name}-route-reflector"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 

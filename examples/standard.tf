@@ -6,11 +6,6 @@ provider "azurerm" {
   features {}
 }
 
-provider "azurerm" {
-  features {}
-  alias = "management"
-}
-
 resource "tls_private_key" "ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -23,12 +18,19 @@ resource "tls_private_key" "ssh" {
 module "bgp_route_reflector" {
   source = "../"
 
+  naming_convention = "gc"
+  user_defined      = "example"
+
   azure_resource_attributes = {
-    project     = "aur"
-    environment = "dev"
-    location    = "canadacentral"
-    instance    = 0
+    department_code = "Gc"
+    owner           = "ABC"
+    project         = "aur"
+    environment     = "dev"
+    location        = "canadacentral"
+    instance        = 0
   }
+
+  source_image_id = ""
 
   # virtual network
   vnet_config = {
@@ -92,11 +94,6 @@ module "bgp_route_reflector" {
       username = "username"
       password = "pass"
     }
-  }
-
-  providers = {
-    azurerm            = azurerm
-    azurerm.management = azurerm.management
   }
 }
 

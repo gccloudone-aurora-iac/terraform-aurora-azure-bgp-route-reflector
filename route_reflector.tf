@@ -1,15 +1,19 @@
 resource "azurerm_resource_group" "this" {
-  name     = module.azure_resource_prefixes.resource_group_prefix
+  name     = module.azure_resource_names.resource_group_name
   location = var.azure_resource_attributes.location
 
   tags = local.tags
 }
 
 module "virtual_network" {
-  source = "git::https://github.com/gccloudone-aurora-iac/terraform-azure-virtual-network.git?ref=v1.0.0"
+  source = "git::https://github.com/gccloudone-aurora-iac/terraform-azure-virtual-network.git?ref=v2.0.0"
 
   azure_resource_attributes = var.azure_resource_attributes
-  resource_group_name       = azurerm_resource_group.this.name
+
+  naming_convention = var.naming_convention
+  user_defined      = var.user_defined
+
+  resource_group_name = azurerm_resource_group.this.name
 
   address_space           = var.vnet_config.address_space
   vnet_peers              = var.vnet_config.vnet_peers
@@ -38,11 +42,6 @@ module "virtual_network" {
   ]
 
   tags = local.tags
-
-  providers = {
-    azurerm                              = azurerm
-    azurerm.bgp_route_reflector_provider = azurerm
-  }
 }
 
 ##########################
@@ -59,7 +58,7 @@ resource "tls_private_key" "ssh" {
 resource "azurerm_network_interface" "this" {
   count = var.vm_instances
 
-  name                = "${module.azure_resource_prefixes.network_interface_card_prefix}-route-reflector-${count.index}"
+  name                = "${module.azure_resource_names.network_interface_card_name}-route-reflector-${count.index}"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
@@ -76,12 +75,12 @@ resource "azurerm_network_interface" "this" {
 resource "azurerm_linux_virtual_machine" "this" {
   count = var.vm_instances
 
-  name                = "${module.azure_resource_prefixes.virtual_machine_prefix}-route-reflector-${count.index}"
+  name                = "${module.azure_resource_names.virtual_machine_name}-route-reflector-${count.index}"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
   size            = var.vm_size
-  source_image_id = data.azurerm_shared_image.aurora_ubuntu2204_server_gen2.id
+  source_image_id = var.source_image_id
 
   network_interface_ids = [azurerm_network_interface.this[count.index].id]
 
@@ -117,7 +116,7 @@ resource "azurerm_linux_virtual_machine" "this" {
 ############
 
 resource "azurerm_user_assigned_identity" "vm" {
-  name                = "${module.azure_resource_prefixes.managed_identity_prefix}-route-reflector"
+  name                = "${module.azure_resource_names.managed_identity_name}-route-reflector"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 

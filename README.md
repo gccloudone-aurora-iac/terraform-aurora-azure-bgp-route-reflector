@@ -17,15 +17,14 @@ Examples for this module along with various configurations can be found in the [
 | Name | Version |
 |------|---------|
 | <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 3.70.0 |
-| <a name="provider_azurerm.management"></a> [azurerm.management](#provider\_azurerm.management) | 3.70.0 |
 | <a name="provider_tls"></a> [tls](#provider\_tls) | n/a |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_azure_resource_prefixes"></a> [azure\_resource\_prefixes](#module\_azure\_resource\_prefixes) | git::https://github.com/gccloudone-aurora-iac/terraform-aurora-azure-resource-prefixes.git | v1.0.0 |
-| <a name="module_virtual_network"></a> [virtual\_network](#module\_virtual\_network) | git::https://github.com/gccloudone-aurora-iac/terraform-azure-virtual-network.git | v1.0.0 |
+| <a name="module_azure_resource_names"></a> [azure\_resource\_names](#module\_azure\_resource\_names) | git::https://github.com/gccloudone-aurora-iac/terraform-aurora-azure-resource-names.git | v2.0.0 |
+| <a name="module_virtual_network"></a> [virtual\_network](#module\_virtual\_network) | git::https://github.com/gccloudone-aurora-iac/terraform-azure-virtual-network.git | v2.0.0 |
 
 ## Inputs
 

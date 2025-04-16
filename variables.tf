@@ -1,12 +1,35 @@
 variable "azure_resource_attributes" {
   description = "Attributes used to describe Azure resources"
   type = object({
-    project     = string
-    environment = string
-    location    = optional(string, "Canada Central")
-    instance    = number
+    department_code = string
+    owner           = string
+    project         = string
+    environment     = string
+    location        = optional(string, "Canada Central")
+    instance        = number
   })
   nullable = false
+}
+
+variable "user_defined" {
+  description = "A user-defined field that describes the Azure resource."
+  type        = string
+  nullable    = false
+
+  validation {
+    condition     = length(var.user_defined) >= 2 && length(var.user_defined) <= 15
+    error_message = "The user-defined field must be between 2-15 characters long."
+  }
+}
+
+variable "naming_convention" {
+  type        = string
+  default     = "oss"
+  description = "Sets which naming convention to use. Accepted values: oss, gc"
+  validation {
+    condition     = var.naming_convention == "oss" || var.naming_convention == "gc"
+    error_message = "The naming_convention field must either be 'oss' or 'gc'."
+  }
 }
 
 variable "tags" {
@@ -64,6 +87,11 @@ variable "vm_size" {
   description = "The size of the Route Reflector VMs"
   type        = string
   default     = "Standard_D2_v5"
+}
+
+variable "source_image_id" {
+  description = "The source image id of the Route Reflector VMs"
+  type        = string
 }
 
 variable "vm_instances" {
