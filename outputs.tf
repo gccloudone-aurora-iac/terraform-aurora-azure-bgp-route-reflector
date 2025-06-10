@@ -3,7 +3,7 @@
 ##########################
 
 output "virtual_network" {
-  value = module.virtual_network
+  value = var.vnet_config == null ? null : module.virtual_network
 }
 
 output "route_table" {
@@ -11,7 +11,7 @@ output "route_table" {
 }
 
 output "azurerm_network_security_group" {
-  value = azurerm_network_security_group.this
+  value = var.vnet_config == null ? null : azurerm_network_security_group.this
 }
 
 ##########################

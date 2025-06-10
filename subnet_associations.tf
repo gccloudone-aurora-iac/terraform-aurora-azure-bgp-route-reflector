@@ -20,6 +20,8 @@ resource "azurerm_route_table" "default" {
 ###########
 
 resource "azurerm_network_security_group" "this" {
+  count = var.vnet_config == null ? 0 : 1
+
   name                = "${module.azure_resource_names.network_security_group_name}-route-reflector"
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
@@ -37,7 +39,7 @@ resource "azurerm_network_security_group" "this" {
       destination_port_range = "179"
 
       source_address_prefixes      = security_rule.value.subnet_address_prefixes
-      destination_address_prefixes = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+      destination_address_prefixes = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
     }
   }
 
@@ -53,7 +55,7 @@ resource "azurerm_network_security_group" "this" {
       source_port_range      = "*"
       destination_port_range = "179"
 
-      source_address_prefixes      = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+      source_address_prefixes      = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
       destination_address_prefixes = security_rule.value.route_server_ip_addresses
     }
   }
@@ -68,7 +70,7 @@ resource "azurerm_network_security_group" "this" {
     source_port_range      = "*"
     destination_port_range = "179"
 
-    source_address_prefixes      = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    source_address_prefixes      = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
     destination_address_prefixes = var.internal_address_prefixes.internal_boundary_route_servers
   }
 
@@ -82,7 +84,7 @@ resource "azurerm_network_security_group" "this" {
     source_port_range      = "*"
     destination_port_range = "443"
 
-    source_address_prefixes      = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    source_address_prefixes      = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
     destination_address_prefixes = var.internal_address_prefixes.management_ingress
   }
 
@@ -96,7 +98,7 @@ resource "azurerm_network_security_group" "this" {
     source_port_range      = "*"
     destination_port_range = "443"
 
-    source_address_prefixes    = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    source_address_prefixes    = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
     destination_address_prefix = "AzureResourceManager"
   }
 
@@ -110,8 +112,8 @@ resource "azurerm_network_security_group" "this" {
     source_port_range      = "*"
     destination_port_range = "179"
 
-    source_address_prefixes      = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
-    destination_address_prefixes = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    source_address_prefixes      = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
+    destination_address_prefixes = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
   }
 
   security_rule {
@@ -125,7 +127,7 @@ resource "azurerm_network_security_group" "this" {
     destination_port_range = "22"
 
     source_address_prefixes      = var.internal_address_prefixes.workstations_operator_subnet
-    destination_address_prefixes = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    destination_address_prefixes = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
   }
 
   security_rule {
@@ -139,7 +141,7 @@ resource "azurerm_network_security_group" "this" {
     destination_port_range = "443"
 
     source_address_prefixes      = var.internal_address_prefixes.mazcc_container_subnet
-    destination_address_prefixes = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    destination_address_prefixes = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
   }
 
   security_rule {
@@ -152,8 +154,8 @@ resource "azurerm_network_security_group" "this" {
     source_port_range      = "*"
     destination_port_range = "179"
 
-    source_address_prefixes      = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
-    destination_address_prefixes = module.virtual_network.vnet_subnets["route-reflector"].address_prefixes
+    source_address_prefixes      = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
+    destination_address_prefixes = var.vnet_config != null ? module.virtual_network.vnet_subnets["route-reflector"].address_prefixes : []
   }
 
   security_rule {

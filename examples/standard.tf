@@ -30,7 +30,7 @@ module "bgp_route_reflector" {
     instance        = 0
   }
 
-  source_image_id = ""
+  source_image = ""
 
   # virtual network
   vnet_config = {

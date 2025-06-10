@@ -61,16 +61,18 @@ variable "vnet_config" {
       })
     })
   })
+  default = null
 }
 
 variable "internal_address_prefixes" {
   description = "The internal address prefixes to use within the NSG rules."
   type = object({
-    mazcc_container_subnet          = list(string)
-    workstations_operator_subnet    = list(string)
-    management_ingress              = list(string)
-    internal_boundary_route_servers = list(string)
+    mazcc_container_subnet          = optional(list(string))
+    workstations_operator_subnet    = optional(list(string))
+    management_ingress              = optional(list(string))
+    internal_boundary_route_servers = optional(list(string))
   })
+  default = null
 }
 
 variable "rt_default_virtual_appliance_ip_address" {
@@ -89,9 +91,14 @@ variable "vm_size" {
   default     = "Standard_D2_v5"
 }
 
-variable "source_image_id" {
-  description = "The source image id of the Route Reflector VMs"
-  type        = string
+variable "source_image" {
+  description = "The source image of the Route Reflector VMs."
+  type = object({
+    publisher = string
+    offer     = string
+    sku       = string
+    version   = string
+  })
 }
 
 variable "vm_instances" {
@@ -118,46 +125,52 @@ variable "private_ip_addresses" {
   type        = list(string)
 }
 
-variable "bird_bgp_config" {
-  description = "Some of the values required to create the bird-bgp daemon configuration file."
-  type = object({
-    path = optional(string, "/bgp/config.yml")
-    values = object({
-      subnet_patterns                 = list(string)
-      virtual_network_blocklist       = optional(list(string), [])
-      subscription_ids                = list(string)
-      tickrate                        = optional(string, "5m")
-      bgp_community_tag_start         = optional(number, 100)
-      cluster_import_allowed_networks = optional(list(string), [])
-      static_config = object({
-        local_asn = optional(number, 64512)
-        bgp_peerings = optional(list(object({
-          name                = string
-          asn                 = number
-          peer_address        = string
-          import_routes       = optional(bool, false)
-          export_no_advertise = optional(bool, true)
-          exported_networks   = optional(list(string), [])
-        })), [])
-      })
-    })
-  })
+variable "subnet_id" {
+  description = "The subnet id for the virtual network."
+  type        = string
+  default     = null
 }
 
-variable "apt_repository" {
-  description = "The information required to pull the 'bird-bgp-daemon' package from the APT repository."
-  type = object({
-    package_name    = optional(string, "bird-bgp-daemon")
-    package_version = optional(string, "")
+# variable "bird_bgp_config" {
+#   description = "Some of the values required to create the bird-bgp daemon configuration file."
+#   type = object({
+#     path = optional(string, "/bgp/config.yml")
+#     values = object({
+#       subnet_patterns                 = list(string)
+#       virtual_network_blocklist       = optional(list(string), [])
+#       subscription_ids                = list(string)
+#       tickrate                        = optional(string, "5m")
+#       bgp_community_tag_start         = optional(number, 100)
+#       cluster_import_allowed_networks = optional(list(string), [])
+#       static_config = object({
+#         local_asn = optional(number, 64512)
+#         bgp_peerings = optional(list(object({
+#           name                = string
+#           asn                 = number
+#           peer_address        = string
+#           import_routes       = optional(bool, false)
+#           export_no_advertise = optional(bool, true)
+#           exported_networks   = optional(list(string), [])
+#         })), [])
+#       })
+#     })
+#   })
+# }
 
-    credentials = object({
-      username = string
-      password = string
-    })
-  })
-  sensitive = true
-}
+# variable "apt_repository" {
+#   description = "The information required to pull the 'bird-bgp-daemon' package from the APT repository."
+#   type = object({
+#     package_name    = optional(string, "bird-bgp-daemon")
+#     package_version = optional(string, "")
 
-variable "local_bird_config" {
-  default = ""
-}
+#     credentials = object({
+#       username = string
+#       password = string
+#     })
+#   })
+#   sensitive = true
+# }
+
+# variable "local_bird_config" {
+#   default = ""
+# }

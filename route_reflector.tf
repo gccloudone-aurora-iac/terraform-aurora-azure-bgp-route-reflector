@@ -7,6 +7,7 @@ resource "azurerm_resource_group" "this" {
 
 module "virtual_network" {
   source = "git::https://github.com/gccloudone-aurora-iac/terraform-azure-virtual-network.git?ref=v2.0.0"
+  count  = var.vnet_config == null ? 0 : 1
 
   azure_resource_attributes = var.azure_resource_attributes
 
@@ -34,12 +35,12 @@ module "virtual_network" {
     }
   ] : []
 
-  subnet_nsgs = [
+  subnet_nsgs = var.vnet_config != null ? [
     {
       subnet_name = local.route_reflector_subnet_name
-      nsg_id      = azurerm_network_security_group.this.id
+      nsg_id      = azurerm_network_security_group.this[0].id
     }
-  ]
+  ] : []
 
   tags = local.tags
 }
@@ -65,7 +66,7 @@ resource "azurerm_network_interface" "this" {
   ip_configuration {
     name                          = "internal"
     private_ip_address_allocation = "Static"
-    subnet_id                     = module.virtual_network.vnet_subnets[local.route_reflector_subnet_name].id
+    subnet_id                     = var.subnet_id
     private_ip_address            = var.private_ip_addresses[count.index % var.vm_instances]
   }
 
@@ -79,8 +80,14 @@ resource "azurerm_linux_virtual_machine" "this" {
   resource_group_name = azurerm_resource_group.this.name
   location            = azurerm_resource_group.this.location
 
-  size            = var.vm_size
-  source_image_id = var.source_image_id
+  size = var.vm_size
+
+  source_image_reference {
+    publisher = var.source_image.publisher
+    offer     = var.source_image.offer
+    sku       = var.source_image.sku
+    version   = var.source_image.version
+  }
 
   network_interface_ids = [azurerm_network_interface.this[count.index].id]
 
@@ -123,37 +130,37 @@ resource "azurerm_user_assigned_identity" "vm" {
   tags = local.tags
 }
 
-resource "azurerm_role_assignment" "vm_managed_identity_aurora_network_reader" {
-  count = length(var.bird_bgp_config.values.subscription_ids)
+# resource "azurerm_role_assignment" "vm_managed_identity_aurora_network_reader" {
+#   count = length(var.bird_bgp_config.values.subscription_ids)
 
-  role_definition_name = "Aurora Network Reader"
-  principal_id         = azurerm_user_assigned_identity.vm.principal_id
-  # Must use a `Subscription Azure Resource ID` instead of simple subscription ID
-  scope = "/subscriptions/${var.bird_bgp_config.values.subscription_ids[count.index]}"
-}
+#   role_definition_name = "Aurora Network Reader"
+#   principal_id         = azurerm_user_assigned_identity.vm.principal_id
+#   # Must use a `Subscription Azure Resource ID` instead of simple subscription ID
+#   scope = "/subscriptions/${var.bird_bgp_config.values.subscription_ids[count.index]}"
+# }
 
 ####################################
 ### Route Reflector VM Extension ###
 ####################################
 
-resource "azurerm_virtual_machine_extension" "bgp_route_reflector_setup" {
-  count = var.vm_instances
+# resource "azurerm_virtual_machine_extension" "bgp_route_reflector_setup" {
+#   count = var.vm_instances
 
-  name                 = "bgp_route_reflector_setup"
-  virtual_machine_id   = azurerm_linux_virtual_machine.this[count.index].id
-  publisher            = "Microsoft.Azure.Extensions"
-  type                 = "CustomScript"
-  type_handler_version = "2.1"
-  protected_settings = jsonencode({
-    "script" = base64encode(templatefile("${path.module}/config/rr-vm-extension.tftpl", {
-      daemon_config     = local.daemon_config[count.index]
-      apt_auth_config   = local.apt_auth_config
-      apt_preferences   = local.apt_preferences_config
-      package_name      = var.apt_repository.package_name
-      package_version   = var.apt_repository.package_version
-      local_bird_config = var.local_bird_config
-    }))
-  })
+#   name                 = "bgp_route_reflector_setup"
+#   virtual_machine_id   = azurerm_linux_virtual_machine.this[count.index].id
+#   publisher            = "Microsoft.Azure.Extensions"
+#   type                 = "CustomScript"
+#   type_handler_version = "2.1"
+#   protected_settings = jsonencode({
+#     "script" = base64encode(templatefile("${path.module}/config/rr-vm-extension.tftpl", {
+#       daemon_config     = local.daemon_config[count.index]
+#       apt_auth_config   = local.apt_auth_config
+#       apt_preferences   = local.apt_preferences_config
+#       package_name      = var.apt_repository.package_name
+#       package_version   = var.apt_repository.package_version
+#       local_bird_config = var.local_bird_config
+#     }))
+#   })
 
-  tags = local.tags
-}
+#   tags = local.tags
+# }
